@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                        String            @id @default(cuid())
+  email                     String            @unique
+  passwordHash              String?           // For NextAuth credentials provider
+  name                      String?
+  createdAt                 DateTime          @default(now())
+  retentionTargetPreference Float             @default(0.9)
+  
+  // LLM Settings
+  llmProvider               String            @default("anthropic")
+  llmApiKey                 String?
+  llmModel                  String            @default("claude-3-5-sonnet-20241022")
+  llmBaseUrl                String?
+
+  // Relations
+  decks                      Deck[]
+  reviewLogs                 ReviewLog[]
+  aiGenerationJobs           AIGenerationJob[]
+}
+
+model Deck {
+  id           String     @id @default(cuid())
+  userId       String
+  name         String
+  description  String?
+  parentDeckId String?
+  createdAt    DateTime   @default(now())
+
+  // Relations
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentDeck   Deck?      @relation("NestedDecks", fields: [parentDeckId], references: [id], onDelete: SetNull)
+  subDecks     Deck[]     @relation("NestedDecks")
+  cards        Card[]
+  tags         DeckTag[]  // SQLite-compatible array alternative
+}
+
+model DeckTag {
+  id      String @id @default(cuid())
+  deckId  String
+  name    String
+  deck    Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, name])
+}
+
+enum CardType {
+  BASIC
+  CLOZE
+  IMAGE_OCCLUSION
+  MULTIPLE_CHOICE
+  TYPED_ANSWER
+}
+
+model Card {
+  id                  String             @id @default(cuid())
+  deckId              String
+  type                CardType
+  front               String
+  back                String
+  extraFields         String             // Storing JSON as a string to be fully SQLite-compatible
+  sourceRef           String?            // Where this card came from, e.g. "AI-generated from lecture3.pdf p.4"
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  aiGenerationJobId   String?
+
+  // Relations
+  deck                Deck               @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  aiGenerationJob     AIGenerationJob?   @relation(fields: [aiGenerationJobId], references: [id], onDelete: SetNull)
+  reviewLogs          ReviewLog[]
+  scheduleState       CardScheduleState?
+  tags                CardTag[]
+}
+
+model CardTag {
+  id      String @id @default(cuid())
+  cardId  String
+  name    String
+  card    Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, name])
+}
+
+enum State {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
+}
+
+enum Rating {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
+
+model ReviewLog {
+  id            String   @id @default(cuid())
+  cardId        String
+  userId        String
+  reviewedAt    DateTime @default(now())
+  rating        Rating
+  scheduledDays Int
+  elapsedDays   Int
+  state         State
+
+  // Relations
+  card          Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CardScheduleState {
+  id            String   @id @default(cuid())
+  cardId        String   @unique
+  due           DateTime
+  stability     Float
+  difficulty    Float
+  elapsedDays   Int
+  scheduledDays Int
+  reps          Int
+  lapses        Int
+  state         State
+  lastReview    DateTime?
+
+  // Relations
+  card          Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model AIGenerationJob {
+  id            String    @id @default(cuid())
+  userId        String
+  sourceType    String    // pdf | text
+  sourceRef     String?
+  status        JobStatus @default(PENDING)
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generatedCards Card[]
+}

@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Synapse Grid
 
-## Getting Started
+Synapse Grid is a web-based flashcard and spaced-repetition study app designed to outperform traditional platforms. It features a real spaced-repetition algorithm (FSRS), a real AI study copilot, and data portability.
 
-First, run the development server:
+## Tech Stack
+- Next.js (App Router), TypeScript, Tailwind CSS
+- PostgreSQL via Prisma ORM
+- NextAuth.js
+- ts-fsrs for scheduling
+- Anthropic Claude API for AI generation and chat
+
+## Setup Instructions
+
+### 1. Environment Variables
+
+Create a `.env.local` file in the root of your project based on the `.env.example` format:
+
+```env
+# Database connection string (PostgreSQL recommended, but SQLite compatible)
+DATABASE_URL="postgresql://user:password@localhost:5432/recallos"
+
+# NextAuth configuration
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="generate-a-strong-secret-key-here"
+
+# Google OAuth (Optional)
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# Anthropic API Key (Required for AI features)
+ANTHROPIC_API_KEY="sk-ant-api03-..."
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Database Migrations
+
+Run Prisma migrations to set up your database schema:
+
+```bash
+npx prisma migrate dev --name init
+```
+
+### 4. Seed Test Data
+
+If you'd like to seed the database with mock decks and cards:
+
+```bash
+npx prisma db seed
+```
+
+*(Ensure you have configured `prisma.seed` in `package.json` to run your seed script, e.g., `ts-node prisma/seed.ts`)*
+
+### 5. Start the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit `http://localhost:3000` to start studying.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Testing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The FSRS Scheduler engine is unit tested using Vitest. To run tests:
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run test
+```
