@@ -103,21 +103,30 @@ $button.Add_Click({
         }
         
         # 2. Install NPM packages
-        Update-Status "Installing NPM dependencies (npm install)..." 50
         Set-Location $global:projectPath
-        
-        $process = Start-Process cmd.exe -ArgumentList "/c npm install" -WindowStyle Hidden -PassThru
-        while (-not $process.HasExited) {
-            [System.Windows.Forms.Application]::DoEvents()
-            Start-Sleep -Milliseconds 100
+        if (-not (Test-Path "node_modules")) {
+            Update-Status "Installing NPM dependencies... (This can take several minutes)" 50
+            $process = Start-Process cmd.exe -ArgumentList "/c npm install" -WindowStyle Hidden -PassThru
+            while (-not $process.HasExited) {
+                [System.Windows.Forms.Application]::DoEvents()
+                Start-Sleep -Milliseconds 100
+            }
+        } else {
+            Update-Status "Dependencies found. Skipping install..." 50
+            Start-Sleep -Seconds 1
         }
         
         # 3. Setup Prisma DB
-        Update-Status "Initializing Database (Prisma)..." 70
-        $process2 = Start-Process cmd.exe -ArgumentList "/c npx prisma db push --accept-data-loss" -WindowStyle Hidden -PassThru
-        while (-not $process2.HasExited) {
-            [System.Windows.Forms.Application]::DoEvents()
-            Start-Sleep -Milliseconds 100
+        if (-not (Test-Path "prisma\dev.db")) {
+            Update-Status "Initializing Database (Prisma)... (This can take a minute)" 70
+            $process2 = Start-Process cmd.exe -ArgumentList "/c npx prisma db push --accept-data-loss" -WindowStyle Hidden -PassThru
+            while (-not $process2.HasExited) {
+                [System.Windows.Forms.Application]::DoEvents()
+                Start-Sleep -Milliseconds 100
+            }
+        } else {
+            Update-Status "Database found. Skipping initialization..." 70
+            Start-Sleep -Seconds 1
         }
         
         # 4. Start Server
