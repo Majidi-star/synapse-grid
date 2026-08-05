@@ -119,7 +119,12 @@ $button.Add_Click({
         # 3. Setup Prisma DB
         if (-not (Test-Path "prisma\dev.db")) {
             Update-Status "Initializing Database (Prisma)... (This can take a minute)" 70
-            $process2 = Start-Process cmd.exe -ArgumentList "/c npx prisma db push --accept-data-loss" -WindowStyle Hidden -PassThru
+            
+            # Pre-create the SQLite file to bypass the "Do you want to continue? [y/N]" prompt
+            if (-not (Test-Path "prisma")) { New-Item -Path "prisma" -ItemType Directory -Force | Out-Null }
+            New-Item -Path "prisma\dev.db" -ItemType File -Force | Out-Null
+
+            $process2 = Start-Process cmd.exe -ArgumentList "/c echo y | npx --yes prisma db push --accept-data-loss" -WindowStyle Hidden -PassThru
             while (-not $process2.HasExited) {
                 [System.Windows.Forms.Application]::DoEvents()
                 Start-Sleep -Milliseconds 100
