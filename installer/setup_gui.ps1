@@ -75,7 +75,11 @@ $closeButton.Add_Click({ $form.Close() })
 $form.Controls.Add($closeButton)
 
 function Update-Status($msg, $val) {
-    $statusLabel.Text = $msg
+    if ($val -gt 0 -and $val -lt 100) {
+        $statusLabel.Text = "[$val%] $msg"
+    } else {
+        $statusLabel.Text = $msg
+    }
     $progressBar.Value = $val
     [System.Windows.Forms.Application]::DoEvents()
 }
@@ -91,15 +95,11 @@ $button.Add_Click({
         $nodeExists = Get-Command "node" -ErrorAction SilentlyContinue
         
         if (-not $nodeExists) {
-            Update-Status "Downloading Node.js (this may take a minute)..." 20
-            $msiPath = "$env:TEMP\node-v20.12.2-x64.msi"
-            Invoke-WebRequest -Uri "https://nodejs.org/dist/v20.12.2/node-v20.12.2-x64.msi" -OutFile $msiPath
-            
-            Update-Status "Installing Node.js..." 30
-            Start-Process msiexec.exe -Wait -ArgumentList "/i `"$msiPath`" /quiet /norestart"
-            
-            # Refresh path
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            Update-Status "Error: Node.js is not installed. Please install Node.js manually." 0
+            $progressBar.Style = "Continuous"
+            $button.Enabled = $true
+            $closeButton.Enabled = $true
+            return
         }
         
         # 2. Install NPM packages
@@ -114,7 +114,7 @@ $button.Add_Click({
         
         # 3. Setup Prisma DB
         Update-Status "Initializing Database (Prisma)..." 70
-        $process2 = Start-Process cmd.exe -ArgumentList "/c npx prisma db push" -WindowStyle Hidden -PassThru
+        $process2 = Start-Process cmd.exe -ArgumentList "/c npx prisma db push --accept-data-loss" -WindowStyle Hidden -PassThru
         while (-not $process2.HasExited) {
             [System.Windows.Forms.Application]::DoEvents()
             Start-Sleep -Milliseconds 100
