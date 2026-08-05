@@ -148,7 +148,8 @@ $button.Add_Click({
         
         # 2. Install NPM packages
         Set-Location $global:projectPath
-        if (-not (Test-Path "node_modules")) {
+        # Check if node_modules exists AND is complete (e.g. has next package)
+        if (-not (Test-Path "node_modules") -or -not (Test-Path "node_modules\next")) {
             if (-not $hasInternet) {
                 Update-Status "Error: No internet! Connect to download dependencies (~100 MB)." 0
                 $progressBar.Style = "Continuous"
@@ -162,6 +163,14 @@ $button.Add_Click({
             while (-not $process.HasExited) {
                 [System.Windows.Forms.Application]::DoEvents()
                 Start-Sleep -Milliseconds 100
+            }
+            
+            if ($process.ExitCode -ne 0) {
+                Update-Status "Error: npm install failed with exit code $($process.ExitCode). Please check your internet/VPN." 0
+                $progressBar.Style = "Continuous"
+                $button.Enabled = $true
+                $closeButton.Enabled = $true
+                return
             }
         } else {
             Update-Status "Dependencies found. Skipping install..." 50
@@ -180,6 +189,14 @@ $button.Add_Click({
             while (-not $process2.HasExited) {
                 [System.Windows.Forms.Application]::DoEvents()
                 Start-Sleep -Milliseconds 100
+            }
+            
+            if ($process2.ExitCode -ne 0) {
+                Update-Status "Error: Database initialization failed (exit code $($process2.ExitCode))." 0
+                $progressBar.Style = "Continuous"
+                $button.Enabled = $true
+                $closeButton.Enabled = $true
+                return
             }
         } else {
             Update-Status "Database found. Skipping initialization..." 70
