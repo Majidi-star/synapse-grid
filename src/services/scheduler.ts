@@ -1,4 +1,5 @@
-import { PrismaClient, Rating as PrismaRating, State as PrismaState } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { Rating as PrismaRating, State as PrismaState } from '@/lib/constants';
 import { fsrs, Rating, State, Card as FSRSCard, FSRSParameters } from 'ts-fsrs';
 
 const prisma = new PrismaClient();

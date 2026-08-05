@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { PrismaClient, CardType, State } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { CardType, State } from '@/lib/constants';
 
 const prisma = new PrismaClient();
 

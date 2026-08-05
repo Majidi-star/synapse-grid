@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { SchedulerService } from '@/services/scheduler';
-import { Rating as PrismaRating } from '@prisma/client';
+import { Rating as PrismaRating } from '@/lib/constants';
 
 export async function POST(
   req: Request,

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SchedulerService } from '../scheduler';
-import { Rating as PrismaRating, State as PrismaState, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { Rating as PrismaRating, State as PrismaState } from '@/lib/constants';
 
 // Mock PrismaClient
 vi.mock('@prisma/client', () => {

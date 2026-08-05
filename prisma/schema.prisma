@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -52,18 +52,10 @@ model DeckTag {
   @@unique([deckId, name])
 }
 
-enum CardType {
-  BASIC
-  CLOZE
-  IMAGE_OCCLUSION
-  MULTIPLE_CHOICE
-  TYPED_ANSWER
-}
-
 model Card {
   id                  String             @id @default(cuid())
   deckId              String
-  type                CardType
+  type                String             @default("BASIC") // Was enum CardType
   front               String
   back                String
   extraFields         String             // Storing JSON as a string to be fully SQLite-compatible
@@ -89,29 +81,15 @@ model CardTag {
   @@unique([cardId, name])
 }
 
-enum State {
-  NEW
-  LEARNING
-  REVIEW
-  RELEARNING
-}
-
-enum Rating {
-  AGAIN
-  HARD
-  GOOD
-  EASY
-}
-
 model ReviewLog {
   id            String   @id @default(cuid())
   cardId        String
   userId        String
   reviewedAt    DateTime @default(now())
-  rating        Rating
+  rating        String   // Was enum Rating
   scheduledDays Int
   elapsedDays   Int
-  state         State
+  state         String   // Was enum State
 
   // Relations
   card          Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
@@ -128,18 +106,11 @@ model CardScheduleState {
   scheduledDays Int
   reps          Int
   lapses        Int
-  state         State
+  state         String   // Was enum State
   lastReview    DateTime?
 
   // Relations
   card          Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
-}
-
-enum JobStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
 }
 
 model AIGenerationJob {
@@ -147,7 +118,7 @@ model AIGenerationJob {
   userId        String
   sourceType    String    // pdf | text
   sourceRef     String?
-  status        JobStatus @default(PENDING)
+  status        String    @default("PENDING") // Was enum JobStatus
   createdAt     DateTime  @default(now())
 
   // Relations
