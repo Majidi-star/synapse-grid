@@ -136,16 +136,16 @@ $button.Add_Click({
         
         # 4. Start Server
         Update-Status "Starting Synapse Grid Server..." 85
-        Start-Process cmd.exe -ArgumentList "/c npm run dev" -WindowStyle Hidden
+        $serverProc = Start-Process cmd.exe -ArgumentList "/c npm run dev" -WindowStyle Hidden -PassThru
         
         # 5. Wait for localhost:3000
         Update-Status "Waiting for server to spin up..." 90
         $serverUp = $false
         $attempts = 0
-        while (-not $serverUp -and $attempts -lt 30) {
+        while (-not $serverUp -and $attempts -lt 30 -and (-not $serverProc.HasExited)) {
             Start-Sleep -Seconds 1
             try {
-                $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -ErrorAction Stop
+                $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
                 if ($response.StatusCode -eq 200) { $serverUp = $true }
             } catch {
                 # Ignore
@@ -154,6 +154,14 @@ $button.Add_Click({
             [System.Windows.Forms.Application]::DoEvents()
         }
         
+        if (-not $serverUp) {
+            Update-Status "Error: Server failed to start. (Missing node_modules?)" 0
+            $progressBar.Style = "Continuous"
+            $button.Enabled = $true
+            $closeButton.Enabled = $true
+            return
+        }
+
         Update-Status "Setup Complete! Opening browser..." 100
         $progressBar.Style = "Continuous"
         Start-Process "http://localhost:3000"
