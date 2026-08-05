@@ -90,22 +90,74 @@ $button.Add_Click({
     $progressBar.Style = "Marquee"
     
     try {
+        # 0. Check Internet
+        Update-Status "Checking internet connection..." 5
+        try {
+            Invoke-WebRequest -Uri "http://www.google.com" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop | Out-Null
+            $hasInternet = $true
+        } catch {
+            $hasInternet = $false
+        }
+
         # 1. Check Node.js
         Update-Status "Checking for Node.js..." 10
         $nodeExists = Get-Command "node" -ErrorAction SilentlyContinue
         
         if (-not $nodeExists) {
-            Update-Status "Error: Node.js is not installed. Please install Node.js manually." 0
+            if (-not $hasInternet) {
+                Update-Status "Error: No internet connection! Please connect to download Node.js (~30 MB)." 0
+                $progressBar.Style = "Continuous"
+                $button.Enabled = $true
+                $closeButton.Enabled = $true
+                return
+            }
+
             $progressBar.Style = "Continuous"
-            $button.Enabled = $true
-            $closeButton.Enabled = $true
-            return
+            $msiPath = "$env:TEMP\node-v20.12.2-x64.msi"
+            
+            $webClient = New-Object System.Net.WebClient
+            
+            $global:downloadPercent = 0
+            $global:downloadComplete = $false
+            
+            Register-ObjectEvent -InputObject $webClient -EventName DownloadProgressChanged -Action {
+                $global:downloadPercent = $Event.SourceEventArgs.ProgressPercentage
+            } | Out-Null
+            
+            Register-ObjectEvent -InputObject $webClient -EventName DownloadFileCompleted -Action {
+                $global:downloadComplete = $true
+            } | Out-Null
+            
+            $webClient.DownloadFileAsync((New-Object System.Uri("https://nodejs.org/dist/v20.12.2/node-v20.12.2-x64.msi")), $msiPath)
+            
+            while (-not $global:downloadComplete) {
+                # Scale the 0-100% download progress to the 10%-40% installation window
+                $scaledProgress = 10 + [math]::Round($global:downloadPercent * 0.3)
+                Update-Status "Downloading Node.js..." $scaledProgress
+                [System.Windows.Forms.Application]::DoEvents()
+                Start-Sleep -Milliseconds 100
+            }
+            
+            Update-Status "Installing Node.js (Please wait)..." 40
+            $progressBar.Style = "Marquee"
+            Start-Process msiexec.exe -Wait -ArgumentList "/i `"$msiPath`" /quiet /norestart"
+            
+            # Refresh path
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
         }
         
         # 2. Install NPM packages
         Set-Location $global:projectPath
         if (-not (Test-Path "node_modules")) {
-            Update-Status "Installing NPM dependencies... (This can take several minutes)" 50
+            if (-not $hasInternet) {
+                Update-Status "Error: No internet! Connect to download dependencies (~100 MB)." 0
+                $progressBar.Style = "Continuous"
+                $button.Enabled = $true
+                $closeButton.Enabled = $true
+                return
+            }
+
+            Update-Status "Downloading app dependencies (~100 MB)... this may take a few minutes." 50
             $process = Start-Process cmd.exe -ArgumentList "/c npm install" -WindowStyle Hidden -PassThru
             while (-not $process.HasExited) {
                 [System.Windows.Forms.Application]::DoEvents()
