@@ -159,7 +159,7 @@ $button.Add_Click({
             }
 
             Update-Status "Downloading app dependencies (~100 MB)... this may take a few minutes." 50
-            $process = Start-Process cmd.exe -ArgumentList "/c npm install" -WindowStyle Hidden -PassThru
+            $process = Start-Process cmd.exe -ArgumentList "/c npm install" -WorkingDirectory $global:projectPath -WindowStyle Hidden -PassThru
             while (-not $process.HasExited) {
                 [System.Windows.Forms.Application]::DoEvents()
                 Start-Sleep -Milliseconds 100
@@ -185,7 +185,7 @@ $button.Add_Click({
             if (-not (Test-Path "prisma")) { New-Item -Path "prisma" -ItemType Directory -Force | Out-Null }
             New-Item -Path "prisma\dev.db" -ItemType File -Force | Out-Null
 
-            $process2 = Start-Process cmd.exe -ArgumentList "/c echo y | npx --yes prisma db push --accept-data-loss" -WindowStyle Hidden -PassThru
+            $process2 = Start-Process cmd.exe -ArgumentList "/c echo y | npx --yes prisma db push --accept-data-loss" -WorkingDirectory $global:projectPath -WindowStyle Hidden -PassThru
             while (-not $process2.HasExited) {
                 [System.Windows.Forms.Application]::DoEvents()
                 Start-Sleep -Milliseconds 100
@@ -208,7 +208,7 @@ $button.Add_Click({
         $logPath = Join-Path $global:projectPath "server_error.log"
         if (Test-Path $logPath) { Remove-Item $logPath -Force -ErrorAction SilentlyContinue }
         
-        $serverProc = Start-Process cmd.exe -ArgumentList "/c npm run dev > `"$logPath`" 2>&1" -WindowStyle Hidden -PassThru
+        $serverProc = Start-Process cmd.exe -ArgumentList "/c npm run dev > `"$logPath`" 2>&1" -WorkingDirectory $global:projectPath -WindowStyle Hidden -PassThru
         
         # 5. Wait for localhost:3000
         Update-Status "Waiting for server to spin up..." 90
