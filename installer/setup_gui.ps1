@@ -187,9 +187,9 @@ $button.Add_Click({
             Start-Sleep -Seconds 1
         }
         
-        # 3. Setup Prisma DB
+        # 3. Setup SQLite Database
         if (-not (Test-Path "prisma\dev.db")) {
-            Update-Status "Initializing Database (Prisma)... (This can take a minute)" 70
+            Update-Status "Initializing local SQLite database... (This can take a minute)" 70
             
             # Pre-create the SQLite file to bypass the "Do you want to continue? [y/N]" prompt
             if (-not (Test-Path "prisma")) { New-Item -Path "prisma" -ItemType Directory -Force | Out-Null }
@@ -202,20 +202,20 @@ $button.Add_Click({
             }
             
             if ($process2.ExitCode -ne 0) {
-                Update-Status "Error: Database initialization failed (exit code $($process2.ExitCode))." 0
+                Update-Status "Error: SQLite Database initialization failed (exit code $($process2.ExitCode))." 0
                 $progressBar.Style = "Continuous"
                 $button.Enabled = $true
                 $closeButton.Enabled = $true
                 return
             }
         } else {
-            Update-Status "Database found. Skipping initialization..." 70
+            Update-Status "Local database found. Skipping initialization..." 70
             Start-Sleep -Seconds 1
         }
 
-        # Check if local Prisma Client is generated (must be compiled for the target OS)
+        # Check if local Database Client is generated (must be compiled for the target OS)
         if (-not (Test-Path "node_modules\.prisma\client")) {
-            Update-Status "Generating Prisma Client..." 80
+            Update-Status "Configuring local database client..." 80
             $process3 = Start-Process cmd.exe -ArgumentList "/c npx --yes prisma generate" -WorkingDirectory $global:projectPath -WindowStyle Hidden -PassThru
             while (-not $process3.HasExited) {
                 [System.Windows.Forms.Application]::DoEvents()
