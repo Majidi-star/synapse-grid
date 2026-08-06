@@ -205,7 +205,10 @@ $button.Add_Click({
         
         # 4. Start Server
         Update-Status "Starting Synapse Grid Server..." 85
-        $serverProc = Start-Process cmd.exe -ArgumentList "/c npm run dev" -WindowStyle Hidden -PassThru
+        $logPath = Join-Path $global:projectPath "server_error.log"
+        if (Test-Path $logPath) { Remove-Item $logPath -Force -ErrorAction SilentlyContinue }
+        
+        $serverProc = Start-Process cmd.exe -ArgumentList "/c npm run dev > `"$logPath`" 2>&1" -WindowStyle Hidden -PassThru
         
         # 5. Wait for localhost:3000
         Update-Status "Waiting for server to spin up..." 90
@@ -224,7 +227,17 @@ $button.Add_Click({
         }
         
         if (-not $serverUp) {
-            Update-Status "Error: Server failed to start. (Missing node_modules?)" 0
+            $errorMsg = "Server failed to start."
+            if (Test-Path $logPath) {
+                $logContent = Get-Content $logPath -Raw
+                if (-not [string]::IsNullOrWhiteSpace($logContent)) {
+                    # Take the last 150 chars or a clean slice of the error to show in GUI
+                    $cleanErr = $logContent -replace '\r?\n', ' '
+                    if ($cleanErr.Length -gt 150) { $cleanErr = $cleanErr.Substring(0, 150) + "..." }
+                    $errorMsg = "Error: $cleanErr"
+                }
+            }
+            Update-Status $errorMsg 0
             $progressBar.Style = "Continuous"
             $button.Enabled = $true
             $closeButton.Enabled = $true
