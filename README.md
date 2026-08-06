@@ -9,43 +9,28 @@ Synapse Grid is a web-based flashcard and spaced-repetition study app designed t
 - ts-fsrs for scheduling
 - Universal LLM Client (Supports Anthropic, OpenAI, Google Gemini, Ollama, NVIDIA NIM)
 
-## Setup Instructions
+## Distribution & Deployment (Portable Desktop App)
 
-### Option 1: One-Click GUI Installer (Windows Only)
-For a seamless installation experience on Windows without touching the terminal:
-1. Double click the **`Install_Synapse_Grid.bat`** file in the project folder.
-2. The custom installer window will appear. It automatically checks for Node.js (and installs it if missing), sets up the dependencies, runs the database migrations, and launches the app directly in your browser.
+Synapse Grid is compiled as a fully self-contained portable desktop application. End-users do not need to install Node.js, run `npm install`, or have an internet connection to load dependencies.
 
-### Option 2: Manual Installation (Mac / Linux / Advanced Users)
+### For End-Users: Running the Application
+1. Extract the packaged zip file (e.g. `Synapse_Grid.zip`) onto your computer.
+2. Double-click the **`Launch_Synapse_Grid.bat`** file inside the folder.
+3. The server will boot locally and automatically open the application in your web browser at `http://localhost:3000`.
 
-#### 1. Environment Variables
-Create a `.env.local` file in the root of your project:
+---
 
-```env
-# NextAuth configuration
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="generate-a-strong-secret-key-here"
+### For Developers: Building & Packaging the App
+If you make changes to the source code and want to compile a new portable desktop bundle:
 
-# Note: AI Provider keys are NOT needed in the .env file!
-# You can configure Anthropic, OpenAI, Gemini, or Ollama directly from the app's Settings UI.
-```
+1. **Prerequisites**: Ensure you have Node.js installed on your development machine.
+2. **Install Dependencies**: Run `npm install` once in the project root.
+3. **Compile and Package**: Run the following command:
+   ```bash
+   npm run build:desktop
+   ```
+4. **Distribution**: This will compile the app and copy all required static assets, the SQLite database schema, and your local `node.exe` engine into a new `dist/` folder. Zip up the `dist/` folder and distribute it to any clean Windows machine!
 
-#### 2. Install Dependencies
-```bash
-npm install
-```
-
-#### 3. Database Initialization
-```bash
-npx prisma db push
-```
-
-#### 4. Start the Server
-```bash
-npm run dev
-```
-
-Visit `http://localhost:3000` to start studying!
 
 ## Testing
 
