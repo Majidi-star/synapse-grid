@@ -90,13 +90,17 @@ $button.Add_Click({
     $progressBar.Style = "Marquee"
     
     try {
-        # 0. Check Internet
+        # 0. Check Internet Connectivity (Try Microsoft and Cloudflare as backups)
         Update-Status "Checking internet connection..." 5
-        try {
-            Invoke-WebRequest -Uri "http://www.google.com" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop | Out-Null
-            $hasInternet = $true
-        } catch {
-            $hasInternet = $false
+        $hasInternet = $false
+        foreach ($url in @("http://www.microsoft.com", "http://www.cloudflare.com")) {
+            try {
+                $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+                if ($response.StatusCode -eq 200) {
+                    $hasInternet = $true
+                    break
+                }
+            } catch {}
         }
 
         # 1. Check Node.js
@@ -115,40 +119,46 @@ $button.Add_Click({
             $progressBar.Style = "Continuous"
             $msiPath = "$env:TEMP\node-v20.12.2-x64.msi"
             
-            $webClient = New-Object System.Net.WebClient
+            # Robust, synchronous single-threaded stream downloader with real-time UI updates
+            $request = [System.Net.HttpWebRequest]::Create("https://nodejs.org/dist/v20.12.2/node-v20.12.2-x64.msi")
+            $request.Timeout = 15000
+            $response = $request.GetResponse()
+            $totalLength = $response.ContentLength
+            $responseStream = $response.GetResponseStream()
+            $targetStream = [System.IO.File]::Create($msiPath)
             
-            $global:downloadPercent = 0
-            $global:downloadComplete = $false
+            $buffer = New-Object byte[] 65536 # 64KB chunk
+            $downloaded = 0
+            $count = $responseStream.Read($buffer, 0, $buffer.Length)
             
-            Register-ObjectEvent -InputObject $webClient -EventName DownloadProgressChanged -Action {
-                $global:downloadPercent = $Event.SourceEventArgs.ProgressPercentage
-            } | Out-Null
-            
-            Register-ObjectEvent -InputObject $webClient -EventName DownloadFileCompleted -Action {
-                $global:downloadComplete = $true
-            } | Out-Null
-            
-            $webClient.DownloadFileAsync((New-Object System.Uri("https://nodejs.org/dist/v20.12.2/node-v20.12.2-x64.msi")), $msiPath)
-            
-            while (-not $global:downloadComplete) {
-                # Scale the 0-100% download progress to the 10%-40% installation window
-                $scaledProgress = 10 + [math]::Round($global:downloadPercent * 0.3)
+            while ($count -gt 0) {
+                $targetStream.Write($buffer, 0, $count)
+                $downloaded += $count
+                
+                $percent = [math]::Round(($downloaded / $totalLength) * 100)
+                $scaledProgress = 10 + [math]::Round($percent * 0.3)
                 Update-Status "Downloading Node.js..." $scaledProgress
+                
                 [System.Windows.Forms.Application]::DoEvents()
-                Start-Sleep -Milliseconds 100
+                $count = $responseStream.Read($buffer, 0, $buffer.Length)
             }
+            
+            $targetStream.Close()
+            $responseStream.Close()
+            $response.Close()
             
             Update-Status "Installing Node.js (Please wait)..." 40
             $progressBar.Style = "Marquee"
             Start-Process msiexec.exe -Wait -ArgumentList "/i `"$msiPath`" /quiet /norestart"
             
-            # Refresh path
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            # Refresh path environment variables, expanding system directories correctly
+            $rawPath = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            $env:Path = [System.Environment]::ExpandEnvironmentVariables($rawPath)
         }
         
         # 2. Install NPM packages
         Set-Location $global:projectPath
-        # Check if node_modules exists AND is complete (e.g. has next package)
+        # Check if node_modules exists AND contains the 'next' core dependency
         if (-not (Test-Path "node_modules") -or -not (Test-Path "node_modules\next")) {
             if (-not $hasInternet) {
                 Update-Status "Error: No internet! Connect to download dependencies (~100 MB)." 0
@@ -202,8 +212,33 @@ $button.Add_Click({
             Update-Status "Database found. Skipping initialization..." 70
             Start-Sleep -Seconds 1
         }
+
+        # Check if local Prisma Client is generated (must be compiled for the target OS)
+        if (-not (Test-Path "node_modules\.prisma\client")) {
+            Update-Status "Generating Prisma Client..." 80
+            $process3 = Start-Process cmd.exe -ArgumentList "/c npx --yes prisma generate" -WorkingDirectory $global:projectPath -WindowStyle Hidden -PassThru
+            while (-not $process3.HasExited) {
+                [System.Windows.Forms.Application]::DoEvents()
+                Start-Sleep -Milliseconds 100
+            }
+        }
         
         # 4. Start Server
+        # Check if port 3000 is already active (means app is running)
+        $alreadyRunning = $false
+        try {
+            $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+            if ($response.StatusCode -eq 200) { $alreadyRunning = $true }
+        } catch {}
+
+        if ($alreadyRunning) {
+            Update-Status "Synapse Grid is already running! Opening browser..." 100
+            Start-Process "http://localhost:3000"
+            Start-Sleep -Seconds 2
+            $form.Close()
+            return
+        }
+
         Update-Status "Starting Synapse Grid Server..." 85
         $logPath = Join-Path $global:projectPath "server_error.log"
         if (Test-Path $logPath) { Remove-Item $logPath -Force -ErrorAction SilentlyContinue }
@@ -231,7 +266,7 @@ $button.Add_Click({
             if (Test-Path $logPath) {
                 $logContent = Get-Content $logPath -Raw
                 if (-not [string]::IsNullOrWhiteSpace($logContent)) {
-                    # Take the last 150 chars or a clean slice of the error to show in GUI
+                    # Take the first 150 chars of error log to display on the installer label
                     $cleanErr = $logContent -replace '\r?\n', ' '
                     if ($cleanErr.Length -gt 150) { $cleanErr = $cleanErr.Substring(0, 150) + "..." }
                     $errorMsg = "Error: $cleanErr"
@@ -243,7 +278,7 @@ $button.Add_Click({
             $closeButton.Enabled = $true
             return
         }
-
+        
         Update-Status "Setup Complete! Opening browser..." 100
         $progressBar.Style = "Continuous"
         Start-Process "http://localhost:3000"
