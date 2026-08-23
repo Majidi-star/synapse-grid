@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:recall_app/core/theme/app_colors.dart';
 
@@ -16,6 +18,8 @@ class RatingButtons extends StatefulWidget {
 }
 
 class _RatingButtonsState extends State<RatingButtons> {
+  bool get _isDesktop => !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -76,6 +80,7 @@ class _RatingButtonsState extends State<RatingButtons> {
         borderColor: borderColor,
         textColor: textColor,
         enabled: widget.enabled,
+        shortcutHint: _isDesktop ? '$rating' : null,
         onTap: () {
           if (widget.enabled) {
             widget.onRate(rating);
@@ -93,6 +98,7 @@ class _RatingButton extends StatefulWidget {
   final Color borderColor;
   final Color textColor;
   final bool enabled;
+  final String? shortcutHint;
   final VoidCallback onTap;
 
   const _RatingButton({
@@ -102,6 +108,7 @@ class _RatingButton extends StatefulWidget {
     required this.borderColor,
     required this.textColor,
     required this.enabled,
+    this.shortcutHint,
     required this.onTap,
   });
 
@@ -155,7 +162,9 @@ class _RatingButtonState extends State<_RatingButton> with SingleTickerProviderS
               ),
               const SizedBox(height: 4),
               Text(
-                widget.interval,
+                widget.shortcutHint != null
+                    ? '${widget.interval} [${widget.shortcutHint}]'
+                    : widget.interval,
                 style: textTheme.labelSmall?.copyWith(
                   color: AppColors.onSurface.withValues(alpha: 0.5),
                 ),
@@ -167,3 +176,4 @@ class _RatingButtonState extends State<_RatingButton> with SingleTickerProviderS
     );
   }
 }
+

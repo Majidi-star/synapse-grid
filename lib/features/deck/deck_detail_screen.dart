@@ -50,6 +50,16 @@ class DeckDetailScreen extends ConsumerWidget {
             tooltip: 'Statistics',
             onPressed: () => AppRouter.goToStats(context, deckId, deckName),
           ),
+          IconButton(
+            icon: const Icon(Icons.quiz_rounded, color: Color(0xFFE3C36C)),
+            tooltip: 'Practice Exam',
+            onPressed: () => AppRouter.goToPracticeExam(context, deckId, deckName),
+          ),
+          IconButton(
+            icon: const Icon(Icons.share_rounded, color: Color(0xFFE3C36C)),
+            tooltip: 'Share & Sync',
+            onPressed: () => AppRouter.goToDeckShare(context, deckId, deckName),
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -113,27 +123,60 @@ class DeckDetailScreen extends ConsumerWidget {
       bottomNavigationBar: dueCards > 0
           ? Padding(
               padding: const EdgeInsets.all(24.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () => AppRouter.goToReviewSession(context, deckId, deckName),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.background,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      onPressed: () => AppRouter.goToReviewSession(
+                        context,
+                        deckId,
+                        deckName,
+                        isAgentic: true,
+                      ),
+                      icon: const Icon(Icons.psychology_rounded, color: AppColors.primaryContainer),
+                      label: Text(
+                        'START AGENTIC SESSION',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: AppColors.primaryContainer,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.primaryContainer),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
                     ),
                   ),
-                  child: Text(
-                    'REVIEW \$dueCards CARDS',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: AppColors.background,
-                          letterSpacing: 2.0,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => AppRouter.goToReviewSession(context, deckId, deckName),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.background,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
                         ),
+                      ),
+                      child: Text(
+                        'REVIEW $dueCards CARDS',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: AppColors.background,
+                              letterSpacing: 2.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             )
           : const SizedBox.shrink(),

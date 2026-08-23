@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:recall_app/core/theme/app_colors.dart';
 import 'ai_providers_screen.dart';
+import 'mcp_connections_screen.dart';
 import '../import_export/import_screen.dart';
 import '../import_export/export_screen.dart';
 
@@ -94,6 +95,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AiProvidersScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildTile(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text('Local MCP Ingestion Sources', style: TextStyle(color: AppColors.onSurface)),
+                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.outline),
+              ],
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const McpConnectionsScreen()),
               );
             },
           ),

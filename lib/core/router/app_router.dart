@@ -8,16 +8,48 @@ import 'package:recall_app/features/review/review_session_screen.dart';
 import 'package:recall_app/features/stats/stats_screen.dart';
 import 'package:recall_app/features/ai/ai_generate_screen.dart';
 import 'package:recall_app/features/chat/chat_screen.dart';
+import 'package:recall_app/features/review/practice_exam_screen.dart';
+import 'package:recall_app/features/settings/mcp_connections_screen.dart';
+import 'package:recall_app/features/deck/deck_share_screen.dart';
 
 class AppRouter {
-  static void goToReviewSession(BuildContext context, String deckId, String deckName) {
+  static void goToDeckShare(BuildContext context, String deckId, String deckName) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ReviewSessionScreen(deckId: deckId, deckName: deckName),
+        builder: (context) => DeckShareScreen(deckId: deckId, deckName: deckName),
       ),
     );
   }
+
+  static void goToMcpConnections(BuildContext context) {
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const McpConnectionsScreen(),
+      ),
+    );
+  }
+
+  static void goToPracticeExam(BuildContext context, String deckId, String deckName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PracticeExamScreen(deckId: deckId, deckName: deckName),
+      ),
+    );
+  }
+
+  static void goToReviewSession(BuildContext context, String deckId, String deckName, {bool isAgentic = false}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReviewSessionScreen(deckId: deckId, deckName: deckName, isAgentic: isAgentic),
+      ),
+    );
+  }
+
 
   static void goToDeckDetail(BuildContext context, String deckId, String deckName) {
     Navigator.push(

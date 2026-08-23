@@ -1,10 +1,21 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recall_app/app.dart';
+import 'package:recall_app/core/platform/desktop_window_manager.dart';
+import 'package:recall_app/services/local_clip_server.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await DesktopWindowManager.initialize();
+
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    final clipServer = LocalClipServer();
+    clipServer.start();
+  }
+
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -13,3 +24,4 @@ void main() {
   ));
   runApp(const ProviderScope(child: SynapApp()));
 }
+

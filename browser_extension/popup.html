@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #1c1b16;
+      color: #e6e1d9;
+      margin: 0;
+      padding: 16px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #e3c36c;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      color: #cfc5b3;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #21201b;
+      border: 1px solid #4c4638;
+      border-radius: 6px;
+      color: #e6e1d9;
+      padding: 8px;
+      font-size: 13px;
+    }
+    textarea {
+      resize: vertical;
+      height: 80px;
+      font-family: inherit;
+    }
+    button {
+      width: 100%;
+      background-color: #e3c36c;
+      color: #3d2f00;
+      border: none;
+      border-radius: 20px;
+      padding: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+    button:hover {
+      background-color: #ffdf8c;
+    }
+    button:disabled {
+      background-color: #484740;
+      color: #b8b5ac;
+      cursor: not-allowed;
+    }
+    .status {
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: center;
+      padding: 6px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: rgba(227, 195, 108, 0.1);
+      color: #e3c36c;
+    }
+    .error {
+      background-color: rgba(255, 180, 171, 0.1);
+      color: #ffb4ab;
+    }
+  </style>
+</head>
+<body>
+  <h2>Synap Web Clipper</h2>
+  
+  <div class="field">
+    <label for="deck-select">Target Deck</label>
+    <select id="deck-select">
+      <option value="">Loading decks...</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="clip-text">Clipped Context</label>
+    <textarea id="clip-text" placeholder="Select text on the page first, or type context here..."></textarea>
+  </div>
+
+  <button id="clip-btn" disabled>ADD TO SYNAP</button>
+  
+  <div id="status-msg" class="status" style="display: none;"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

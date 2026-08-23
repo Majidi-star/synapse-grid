@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Synap Clipper",
+  "version": "1.0",
+  "description": "Clip text from any webpage into Synap flashcard decks.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

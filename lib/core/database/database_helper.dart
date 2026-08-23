@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 
 class DatabaseHelper {
@@ -16,7 +18,14 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'synap.db');
+    String path;
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+      path = join(await databaseFactory.getDatabasesPath(), 'synap.db');
+    } else {
+      path = join(await getDatabasesPath(), 'synap.db');
+    }
     return await openDatabase(
       path,
       version: 2,
