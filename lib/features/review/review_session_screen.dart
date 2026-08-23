@@ -7,7 +7,6 @@ import 'package:recall_app/core/theme/app_colors.dart';
 import 'package:recall_app/models/card.dart';
 import 'package:recall_app/services/fsrs_engine.dart';
 import 'package:recall_app/providers/review_providers.dart';
-import 'package:recall_app/models/study_session_plan.dart';
 import 'package:recall_app/providers/study_agent_providers.dart';
 import 'widgets/flashcard_widget.dart';
 import 'widgets/progress_bar.dart';
@@ -33,6 +32,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
   int _currentCardIndex = 0;
   bool _isFlipped = false;
   final FocusNode _focusNode = FocusNode();
+  final Stopwatch _cardStopwatch = Stopwatch();
 
   // Agentic fields
   bool _hasStarted = false;
@@ -48,6 +48,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
     if (widget.isAgentic) {
       _initAgenticPlan();
     }
+    _cardStopwatch.start();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
@@ -87,9 +88,11 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
       ref.read(reviewServiceProvider).recordReview(
         dueCard.card.id,
         rating,
-        0, // elapsed time in ms
+        _cardStopwatch.elapsedMilliseconds,
         DateTime.now(),
       );
+      _cardStopwatch.reset();
+      _cardStopwatch.start();
 
       _recentRatings.add(ratingValue);
       if (widget.isAgentic && _recentRatings.length >= 5) {
@@ -159,6 +162,8 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
         _isFlipped = false;
         _currentCardIndex--;
       });
+      _cardStopwatch.reset();
+      _cardStopwatch.start();
     }
   }
 
@@ -170,6 +175,8 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
         _isFlipped = false;
         _currentCardIndex++;
       });
+      _cardStopwatch.reset();
+      _cardStopwatch.start();
     }
   }
 

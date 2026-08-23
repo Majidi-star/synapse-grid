@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:recall_app/core/theme/app_colors.dart';
 import 'package:recall_app/core/router/app_router.dart';
 import 'package:recall_app/providers/card_providers.dart';
+import 'package:recall_app/providers/review_providers.dart';
+import 'package:recall_app/providers/stats_providers.dart';
 
 class DeckDetailScreen extends ConsumerWidget {
   final String deckId;
@@ -17,7 +19,8 @@ class DeckDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cardsAsyncValue = ref.watch(cardsForDeckProvider(deckId));
-    final dueCards = 10; // Mock due cards
+    final dueCardsAsync = ref.watch(dueCardCountProvider(deckId));
+    final dueCards = dueCardsAsync.value ?? 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -65,7 +68,7 @@ class DeckDetailScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          _buildStatsSummary(context),
+          _buildStatsSummary(context, ref),
           const SizedBox(height: 16),
           Expanded(
             child: cardsAsyncValue.when(
@@ -183,15 +186,21 @@ class DeckDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsSummary(BuildContext context) {
+  Widget _buildStatsSummary(BuildContext context, WidgetRef ref) {
+    final cardsAsync = ref.watch(cardsForDeckProvider(deckId));
+    final dueAsync = ref.watch(dueCardCountProvider(deckId));
+    final retentionAsync = ref.watch(retentionRateProvider(deckId));
+    final totalCards = cardsAsync.value?.length ?? 0;
+    final dueCount = dueAsync.value ?? 0;
+    final retention = retentionAsync.value ?? 0.0;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildStatChip(context, 'Total', '20'),
-          _buildStatChip(context, 'Due', '10'),
-          _buildStatChip(context, 'Mastery', '85%'),
+          _buildStatChip(context, 'Total', '$totalCards'),
+          _buildStatChip(context, 'Due', '$dueCount'),
+          _buildStatChip(context, 'Mastery', '${(retention * 100).toInt()}%'),
         ],
       ),
     );

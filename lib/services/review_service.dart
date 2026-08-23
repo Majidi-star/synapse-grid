@@ -13,7 +13,9 @@ class ReviewService {
     final List<Map<String, dynamic>> maps = await db.rawQuery('''
       SELECT 
         s.stability, s.difficulty, s.due_date, s.last_review, s.reps, s.lapses, s.state,
-        c.id as card_id, c.id as id, c.deck_id, c.front_text, c.back_text, c.created_at, c.updated_at
+        c.id as card_id, c.id as id, c.deck_id, c.front_text, c.back_text,
+        c.card_type, c.extra_data, c.parent_note_id,
+        c.created_at, c.updated_at
       FROM scheduler_state s
       INNER JOIN cards c ON s.card_id = c.id
       WHERE c.deck_id = ? AND s.due_date <= ?
