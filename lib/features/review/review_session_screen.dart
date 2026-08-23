@@ -162,8 +162,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 340),
                     child: FlashcardWidget(
-                      frontText: currentCard.card.frontText,
-                      backText: currentCard.card.backText,
+                      card: currentCard.card,
                       isFlipped: _isFlipped,
                       onFlip: _onFlip,
                       onRate: _onRate,

@@ -6,6 +6,8 @@ import 'package:recall_app/features/card/card_form_screen.dart';
 import 'package:recall_app/features/settings/settings_screen.dart';
 import 'package:recall_app/features/review/review_session_screen.dart';
 import 'package:recall_app/features/stats/stats_screen.dart';
+import 'package:recall_app/features/ai/ai_generate_screen.dart';
+import 'package:recall_app/features/chat/chat_screen.dart';
 
 class AppRouter {
   static void goToReviewSession(BuildContext context, String deckId, String deckName) {
@@ -67,6 +69,24 @@ class AppRouter {
       context,
       MaterialPageRoute(
         builder: (context) => StatsScreen(deckId: deckId, deckName: deckName),
+      ),
+    );
+  }
+
+  static void goToAiGenerate(BuildContext context, String deckId, String deckName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AiGenerateScreen(deckId: deckId, deckName: deckName),
+      ),
+    );
+  }
+
+  static void goToChat(BuildContext context, String deckId, String deckName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(deckId: deckId, deckName: deckName),
       ),
     );
   }

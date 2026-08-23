@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:recall_app/core/theme/app_colors.dart';
+import 'ai_providers_screen.dart';
+import '../import_export/import_screen.dart';
+import '../import_export/export_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -78,15 +81,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 32),
+          _buildSectionHeader(context, 'AI COGNITIVE ASSISTANCE'),
+          _buildTile(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text('Manage AI Provider Profiles', style: TextStyle(color: AppColors.onSurface)),
+                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.outline),
+              ],
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AiProvidersScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: 32),
           _buildSectionHeader(context, 'DATA'),
           _buildTile(
-            child: const Text('Export as CSV', style: TextStyle(color: AppColors.onSurface)),
-            onTap: () {},
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text('Import Anki Deck (.apkg)', style: TextStyle(color: AppColors.onSurface)),
+                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.outline),
+              ],
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AnkiImportScreen()),
+              );
+            },
           ),
           const SizedBox(height: 8),
           _buildTile(
-            child: const Text('Import CSV', style: TextStyle(color: AppColors.onSurface)),
-            onTap: () {},
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text('Export to Anki (.apkg)', style: TextStyle(color: AppColors.onSurface)),
+                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.outline),
+              ],
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AnkiExportScreen()),
+              );
+            },
           ),
           const SizedBox(height: 32),
           _buildSectionHeader(context, 'ABOUT'),

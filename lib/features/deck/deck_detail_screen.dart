@@ -34,6 +34,24 @@ class DeckDetailScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.psychology_rounded, color: Color(0xFFE3C36C)),
+            tooltip: 'AI Generate Cards',
+            onPressed: () => AppRouter.goToAiGenerate(context, deckId, deckName),
+          ),
+          IconButton(
+            icon: const Icon(Icons.forum_rounded, color: Color(0xFFE3C36C)),
+            tooltip: 'AI Tutor Chat',
+            onPressed: () => AppRouter.goToChat(context, deckId, deckName),
+          ),
+          IconButton(
+            icon: const Icon(Icons.bar_chart_rounded, color: Color(0xFFE3C36C)),
+            tooltip: 'Statistics',
+            onPressed: () => AppRouter.goToStats(context, deckId, deckName),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         children: [

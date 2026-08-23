@@ -1,19 +1,23 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:recall_app/core/theme/app_colors.dart';
+import 'package:recall_app/models/card.dart';
 import 'rating_buttons.dart';
+import 'cloze_card_widget.dart';
+import 'image_occlusion_widget.dart';
 
 class FlashcardWidget extends StatefulWidget {
-  final String frontText;
-  final String backText;
+  final FlashCard card;
   final bool isFlipped;
   final VoidCallback onFlip;
   final Function(int) onRate;
 
   const FlashcardWidget({
     Key? key,
-    required this.frontText,
-    required this.backText,
+    required this.card,
     required this.isFlipped,
     required this.onFlip,
     required this.onRate,
@@ -27,10 +31,12 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  AudioPlayer? _audioPlayer;
 
   @override
   void initState() {
     super.initState();
+    _audioPlayer = AudioPlayer();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -51,16 +57,47 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     if (widget.isFlipped != oldWidget.isFlipped) {
       if (widget.isFlipped) {
         _controller.forward();
+        _playAudio();
       } else {
         _controller.reverse();
       }
+    }
+    if (widget.card.id != oldWidget.card.id) {
+      // Play audio on new card load
+      _playAudio();
     }
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _audioPlayer?.dispose();
     super.dispose();
+  }
+
+  String? _getAudioPath() {
+    if (widget.card.extraData == null) return null;
+    try {
+      final data = jsonDecode(widget.card.extraData!);
+      return data['audioPath'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _playAudio() async {
+    final path = _getAudioPath();
+    if (path != null) {
+      final file = File(path);
+      if (await file.exists()) {
+        try {
+          await _audioPlayer?.stop();
+          await _audioPlayer?.play(DeviceFileSource(path));
+        } catch (e) {
+          debugPrint('Playback error: $e');
+        }
+      }
+    }
   }
 
   @override
@@ -102,6 +139,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
   Widget _buildFrontSide(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final hasAudio = _getAudioPath() != null;
 
     return Container(
       decoration: BoxDecoration(
@@ -119,24 +157,31 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           ),
         ],
       ),
-      padding: const EdgeInsets.all(48),
+      padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          const Spacer(),
-          Text(
-            widget.frontText,
-            textAlign: TextAlign.center,
-            style: textTheme.displayLarge?.copyWith(
-              color: AppColors.onSurface,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (hasAudio)
+                IconButton(
+                  onPressed: _playAudio,
+                  icon: const Icon(Icons.volume_up_rounded, color: Color(0xFFE3C36C)),
+                ),
+            ],
+          ),
+          Expanded(
+            child: Center(
+              child: _buildFrontContent(context),
             ),
           ),
-          const Spacer(),
           Text(
             'TAP TO REVEAL',
             style: textTheme.labelMedium?.copyWith(
               color: AppColors.primaryContainer.withOpacity(0.7),
               letterSpacing: 2.0,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Geist',
             ),
           ),
         ],
@@ -144,8 +189,41 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     );
   }
 
+  Widget _buildFrontContent(BuildContext context) {
+    final card = widget.card;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (card.cardType == CardType.cloze) {
+      return ClozeCardWidget(
+        text: card.frontText,
+        isBack: false,
+        style: textTheme.displayLarge,
+      );
+    } else if (card.cardType == CardType.imageOcclusion && card.extraData != null) {
+      try {
+        final data = jsonDecode(card.extraData!);
+        return ImageOcclusionWidget(
+          imagePath: data['imagePath'] as String,
+          activeRegion: data['activeRegion'] as Map<String, dynamic>,
+          allRegions: data['regions'] as List,
+          isBack: false,
+        );
+      } catch (_) {}
+    }
+
+    return Text(
+      card.frontText,
+      textAlign: TextAlign.center,
+      style: textTheme.displayLarge?.copyWith(
+        color: AppColors.onSurface,
+        fontFamily: 'Manrope',
+      ),
+    );
+  }
+
   Widget _buildBackSide(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final hasAudio = _getAudioPath() != null;
 
     return Container(
       decoration: BoxDecoration(
@@ -163,20 +241,65 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           ),
         ],
       ),
-      padding: const EdgeInsets.all(48),
+      padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          const Spacer(),
-          Text(
-            widget.backText,
-            textAlign: TextAlign.center,
-            style: textTheme.displayLarge?.copyWith(
-              color: AppColors.primaryContainer,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (hasAudio)
+                IconButton(
+                  onPressed: _playAudio,
+                  icon: const Icon(Icons.volume_up_rounded, color: Color(0xFFE3C36C)),
+                ),
+            ],
+          ),
+          Expanded(
+            child: Center(
+              child: _buildBackContent(context),
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 16),
           RatingButtons(onRate: widget.onRate),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBackContent(BuildContext context) {
+    final card = widget.card;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (card.cardType == CardType.cloze && card.extraData != null) {
+      try {
+        final data = jsonDecode(card.extraData!);
+        final rawText = data['clozeText'] as String? ?? card.frontText;
+        final index = data['clozeIndex'] as int?;
+        return ClozeCardWidget(
+          text: rawText,
+          targetIndex: index,
+          isBack: true,
+          style: textTheme.displayLarge,
+        );
+      } catch (_) {}
+    } else if (card.cardType == CardType.imageOcclusion && card.extraData != null) {
+      try {
+        final data = jsonDecode(card.extraData!);
+        return ImageOcclusionWidget(
+          imagePath: data['imagePath'] as String,
+          activeRegion: data['activeRegion'] as Map<String, dynamic>,
+          allRegions: data['regions'] as List,
+          isBack: true,
+        );
+      } catch (_) {}
+    }
+
+    return Text(
+      card.backText,
+      textAlign: TextAlign.center,
+      style: textTheme.displayLarge?.copyWith(
+        color: AppColors.primaryContainer,
+        fontFamily: 'Manrope',
       ),
     );
   }

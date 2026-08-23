@@ -24,6 +24,19 @@ dependencies:
   intl: ^0.20.2
   collection: ^1.19.1
 
+  # Phase 1 Media & Utilities
+  image_picker: ^1.1.2
+  audioplayers: ^6.1.0
+  file_picker: ^8.1.6
+  record: ^7.1.1
+  fl_chart: ^0.70.2
+  archive: ^4.0.2
+  share_plus: ^10.1.4
+  http: ^1.2.2
+  read_pdf_text: ^0.3.0
+  shared_preferences: ^2.3.4
+  flutter_markdown: ^0.7.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
